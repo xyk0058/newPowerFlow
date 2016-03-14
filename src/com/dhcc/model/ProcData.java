@@ -28,7 +28,7 @@ public class ProcData {
 			int N = nbus;
 			int Nb = nbranch;
 			int Ng = ngen;
-			int Nl = 0;
+			int Nl = nbus - ngen - 1;
 			int V0 = 0;
 			
 			_mpc = new MPC(nbus, ngen, nbranch);
@@ -110,6 +110,7 @@ public class ProcData {
 			branch[i].setTo((int) brch[i][1]);
 			branch[i].setR(brch[i][2]);
 			branch[i].setX(brch[i][3]);
+			//电容容纳 or 对地导纳
 			branch[i].setY0(brch[i][4]);
 		}
 		//负荷
@@ -117,6 +118,7 @@ public class ProcData {
 		for (int i = 0; i < info.getN(); ++i) {
 			if (genIdx.contains((int) bus[i][0])) continue;
 			load[j].setIndex((int) bus[i][0]);
+			//取负值
 			load[j].setP(-Math.abs(bus[i][2]));
 			load[j].setQ(-Math.abs(bus[i][3]));
 			load[j].setV(bus[i][7]);
