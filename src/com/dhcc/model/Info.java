@@ -13,15 +13,18 @@ public class Info {
 	private double V0;
 	//收敛精确度
 	private double eps;
+	//pv节点个数
+	private int Npv;
 	
 //	public Info() {};
 	
-	public Info(int n, int nb, int ng, int nl, double v0, double eps) {
+	public Info(int n, int nb, int ng, int nl, double v0, int npv, double eps) {
 		this.N = n;
 		this.Nb = nb;
 		this.Ng = ng;
 		this.Nl = nl;
 		this.V0 = v0;
+		this.setNpv(npv);
 		this.eps = eps;
 	}
 	
@@ -60,5 +63,13 @@ public class Info {
 	}
 	public void setEps(double eps) {
 		this.eps = eps;
+	}
+
+	public int getNpv() {
+		return Npv;
+	}
+
+	public void setNpv(int npv) {
+		Npv = npv;
 	}
 }

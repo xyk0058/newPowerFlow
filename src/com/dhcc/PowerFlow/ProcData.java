@@ -1,4 +1,4 @@
-﻿package com.dhcc.model;
+﻿package com.dhcc.PowerFlow;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -9,6 +9,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 import com.dhcc.Global.Variable;
+import com.dhcc.model.Branch;
+import com.dhcc.model.Bus;
+import com.dhcc.model.Info;
+import com.dhcc.model.MPC;
+import com.dhcc.model.PVNode;
 
 public class ProcData {
 	private MPC _mpc;
@@ -29,6 +34,7 @@ public class ProcData {
 			int Nb = nbranch;
 			int Ng = ngen;
 			int Nl = nbus - ngen - 1;
+			int Npv = 0;
 			int V0 = 0;
 			
 			_mpc = new MPC(nbus, ngen, nbranch);
@@ -42,6 +48,7 @@ public class ProcData {
 					bus[i][j] = Double.parseDouble(rowdata[j]);
 				}
 				V0 += Math.abs(bus[i][7]);
+				if(bus[i][1] == Variable.PV) ++Npv;
 			}
 			V0 = V0 / nbus;
 			
@@ -68,7 +75,7 @@ public class ProcData {
 			_mpc.setBranch(branch);
 			_mpc.setGen(gen);
 			
-			Info pf_info = new Info(N, Nb, Ng, Nl, V0, 0.00001);
+			Info pf_info = new Info(N, Nb, Ng, Nl, V0, Npv, 0.00001);
 			Variable.setPf_info(pf_info);
 			
 			
@@ -89,6 +96,7 @@ public class ProcData {
 		Branch[] branch = new Branch[info.getNb()];
 		Bus[] generator = new Bus[info.getNg()];
 		Bus[] load = new Bus[info.getNl()];
+		PVNode[] pvNode = new PVNode[info.getNpv()];
 		
 		ArrayList<Integer> genIdx = new ArrayList<Integer>();
 		
@@ -117,13 +125,33 @@ public class ProcData {
 		int j = 0;
 		for (int i = 0; i < info.getN(); ++i) {
 			if (genIdx.contains((int) bus[i][0])) continue;
+			if (bus[i][1] == Variable.REF) continue;
 			load[j].setIndex((int) bus[i][0]);
 			//取负值
 			load[j].setP(-Math.abs(bus[i][2]));
 			load[j].setQ(-Math.abs(bus[i][3]));
-			load[j].setV(bus[i][7]);
+			if(bus[i][1] == Variable.PQ) {
+				load[j].setV(bus[i][7]);
+			} else if (bus[i][1] == Variable.PV) {
+				load[j].setV(-Math.abs(bus[i][7]));
+			}
+			j++;
 		}
-		//
+		//pv节点
+		j = 0;
+		for (int i = 0; i < info.getN(); ++i) {
+			if(bus[i][1] == Variable.PV) {
+				pvNode[j].setIndex((int) bus[i][0]);
+				pvNode[j].setV(Math.abs(bus[i][7]));
+				j++;
+			}
+		}
+		
+		Variable.setBranch(branch);
+		Variable.setGenerator(generator);
+		Variable.setLoad(load);
+		Variable.setPvNode(pvNode);
+		
 	}
 	
 	public static void main(String[] args) {
