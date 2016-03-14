@@ -14,6 +14,17 @@ public class Info {
 	//收敛精确度
 	private double eps;
 	
+//	public Info() {};
+	
+	public Info(int n, int nb, int ng, int nl, double v0, double eps) {
+		this.N = n;
+		this.Nb = nb;
+		this.Ng = ng;
+		this.Nl = nl;
+		this.V0 = v0;
+		this.eps = eps;
+	}
+	
 	public int getN() {
 		return N;
 	}

@@ -21,21 +21,46 @@ public class Branch {
 		this.X = X;
 		this.Y0 = Y0;
 	}
-	
+
 	public int getFrom() {
 		return from;
 	}
+
+	public void setFrom(int from) {
+		this.from = from;
+	}
+
 	public int getTo() {
 		return to;
 	}
+
+	public void setTo(int to) {
+		this.to = to;
+	}
+
 	public double getR() {
 		return R;
 	}
+
+	public void setR(double r) {
+		R = r;
+	}
+
 	public double getX() {
 		return X;
 	}
+
+	public void setX(double x) {
+		X = x;
+	}
+
 	public double getY0() {
 		return Y0;
 	}
+
+	public void setY0(double y0) {
+		Y0 = y0;
+	}
+	
 	
 }
