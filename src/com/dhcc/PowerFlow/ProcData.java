@@ -14,6 +14,8 @@ import com.dhcc.model.Bus;
 import com.dhcc.model.Info;
 import com.dhcc.model.MPC;
 import com.dhcc.model.PVNode;
+import com.dhcc.model.Yii;
+import com.dhcc.model.Yij;
 
 public class ProcData {
 	private MPC _mpc;
@@ -33,7 +35,7 @@ public class ProcData {
 			int N = nbus;
 			int Nb = nbranch;
 			int Ng = ngen;
-			int Nl = nbus - ngen - 1;
+			int Nl = nbus - ngen;
 			int Npv = 0;
 			int V0 = 0;
 			
@@ -101,11 +103,12 @@ public class ProcData {
 		ArrayList<Integer> genIdx = new ArrayList<Integer>();
 		
 		double[][] brch = _mpc.getBranch();
-		double[][] gen = _mpc.getBranch();
+		double[][] gen = _mpc.getGen();
 		double[][] bus = _mpc.getBus();
 		
 		//发电机
 		for (int i = 0; i < info.getNg(); ++i) {
+			generator[i] = new Bus();
 			generator[i].setIndex((int) gen[i][0]);
 			generator[i].setP(Math.abs(gen[i][1]));
 			generator[i].setQ(Math.abs(gen[i][2]));
@@ -114,6 +117,7 @@ public class ProcData {
 		}
 		//支路
 		for (int i = 0; i < info.getNb(); ++i) {
+			branch[i] = new Branch();
 			branch[i].setFrom((int) brch[i][0]);
 			branch[i].setTo((int) brch[i][1]);
 			branch[i].setR(brch[i][2]);
@@ -121,11 +125,15 @@ public class ProcData {
 			//电容容纳 or 对地导纳
 			branch[i].setY0(brch[i][4]);
 		}
+		
+
 		//负荷
 		int j = 0;
 		for (int i = 0; i < info.getN(); ++i) {
 			if (genIdx.contains((int) bus[i][0])) continue;
-			if (bus[i][1] == Variable.REF) continue;
+			if ((int)bus[i][1] == Variable.REF) continue;
+			//System.out.println(load.length + " " + j + " " + bus[i][0]);
+			load[j] = new Bus();
 			load[j].setIndex((int) bus[i][0]);
 			//取负值
 			load[j].setP(-Math.abs(bus[i][2]));
@@ -137,10 +145,12 @@ public class ProcData {
 			}
 			j++;
 		}
+		
 		//pv节点
 		j = 0;
 		for (int i = 0; i < info.getN(); ++i) {
 			if(bus[i][1] == Variable.PV) {
+				pvNode[j] = new PVNode();
 				pvNode[j].setIndex((int) bus[i][0]);
 				pvNode[j].setV(Math.abs(bus[i][7]));
 				j++;
@@ -154,9 +164,90 @@ public class ProcData {
 		
 	}
 	
+	public void calcY() {
+		Info info = Variable.getPf_info();
+		Yii[] yii = new Yii[info.getN()];
+		Yii[] yii1 = new Yii[info.getN()];
+		Yij[] yij = new Yij[info.getNb()];
+		Yij[] yij1 = new Yij[info.getNb()];
+		int[] NYseq = new int[info.getN()];
+		int[] NYsum = new int[info.getN()];
+		Branch[] branch = Variable.getBranch();
+		
+		System.out.println(info.getNb());
+		
+		for (int i = 0; i < info.getN(); ++i) {
+			yii[i] = new Yii();
+			yii1[i] = new Yii();
+			yii[i].setB(0);yii[i].setG(0);
+			yii1[i].setB(0);yii1[i].setG(0);
+			NYsum[i] = 0;
+		}
+		
+		for (int i = 0; i < info.getNb(); ++i) {
+			yij[i] = new Yij();
+			yij1[i] = new Yij();
+			yij[i].setB(0);yij[i].setG(0);
+			yij1[i].setB(0);yij1[i].setG(0);
+		}
+		
+		for (int n = 0; n < info.getNb(); ++n) {
+			int i = Math.abs(branch[n].getFrom()) - 1;
+			int j = Math.abs(branch[n].getTo()) - 1;
+			double R = branch[n].getR();
+			double X = branch[n].getX();
+			double YK = branch[n].getY0();
+			double Zmag2 = R * R + X * X;
+			double Gij = R / Zmag2;
+			double Bij = X / Zmag2;
+			double b_ij = -1.0 / X;
+			
+			System.out.println(yij[n]);
+			
+			if (branch[n].getFrom() < 0 || branch[n].getTo() < 0) {
+				yij[n].setG(-Gij / YK);
+				yij[n].setB(-Bij / YK);
+				yij1[n].setG(0);
+				yij1[n].setB(-b_ij / YK);
+			} else {
+				yij[n].setG(-Gij);
+				yij[n].setB(-Bij);
+				yij1[n].setG(0);
+				yij1[n].setB(-b_ij);
+			}
+			yij[n].setJ(j);
+			yij1[n].setJ(j);
+			if(branch[n].getFrom() <0 || branch[n].getTo() < 0) {
+				yii[i].setG(yii[i].getG() + Gij/YK);
+				yii[i].setB(yii[i].getB() + Bij/YK);
+				yii[j].setG(yii[j].getG() + Gij/YK);
+				yii[j].setB(yii[j].getB() + Bij/YK);
+				
+				yii1[i].setB(yii1[i].getB() + b_ij/YK);
+				yii1[j].setB(yii1[j].getB() + b_ij/YK);
+			} else {
+				yii[i].setG(yii[i].getG() + Bij);
+				yii[i].setB(yii[i].getB() + Bij);
+				yii[j].setG(yii[j].getG() + Bij);
+				yii[j].setB(yii[j].getB() + Bij);
+				
+				yii1[i].setB(yii1[i].getB() + b_ij);
+				yii1[j].setB(yii1[j].getB() + b_ij);
+			}
+			NYsum[i] = NYsum[i] + 1;
+		}
+		
+		NYseq[1] = 1;
+		for (int i = 1; i < info.getN() - 1; ++i) {
+			NYseq[i + 1] = NYseq[i] + NYsum[i];
+		}
+		
+	}
+	
 	public static void main(String[] args) {
 		ProcData pd = new ProcData();
 		pd.ReadData("/Users/xyk0058/Git/newPowerFlow/src/com/dhcc/casedata/case14.txt");
 		pd.InitData();
+		pd.calcY();
 	}
 }

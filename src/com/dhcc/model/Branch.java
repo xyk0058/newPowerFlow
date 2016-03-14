@@ -13,7 +13,7 @@ public class Branch {
 	//输电线路充电电容的容纳
 	private double Y0;
 	
-//	public Branch(){};
+	public Branch(){};
 	public Branch(int from, int to, double R, double X, double Y0) {
 		this.from = from;
 		this.to = to;

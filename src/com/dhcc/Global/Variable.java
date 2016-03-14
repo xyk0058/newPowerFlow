@@ -4,6 +4,8 @@ import com.dhcc.model.Branch;
 import com.dhcc.model.Bus;
 import com.dhcc.model.Info;
 import com.dhcc.model.PVNode;
+import com.dhcc.model.Yii;
+import com.dhcc.model.Yij;
 
 public class Variable {
 	
@@ -15,8 +17,36 @@ public class Variable {
 	private static Bus[] generator;		//Ng
 	private static Bus[] load;			//Nl
 	private static PVNode[] pvNode;
+	private static Yii[] Yii;
+	private static Yij[] Yij;
+	private static int[] NYseq;
+	private static int[] NYsum;
 	
 	
+	public static int[] getNYseq() {
+		return NYseq;
+	}
+	public static void setNYseq(int[] nYseq) {
+		NYseq = nYseq;
+	}
+	public static int[] getNYsum() {
+		return NYsum;
+	}
+	public static void setNYsum(int[] nYsum) {
+		NYsum = nYsum;
+	}
+	public static Yii[] getYii() {
+		return Yii;
+	}
+	public static void setYii(Yii[] yii) {
+		Yii = yii;
+	}
+	public static Yij[] getYij() {
+		return Yij;
+	}
+	public static void setYij(Yij[] yij) {
+		Yij = yij;
+	}
 	public static Info getPf_info() {
 		return pf_info;
 	}
