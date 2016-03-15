@@ -208,7 +208,7 @@ public class ProcData {
 			Bij = X / Zmag2;
 			b_ij = -1.0 / X;
 			
-			System.out.println(yij[n]);
+			//System.out.println(yij[n]);
 			
 			if (branch[n].getFrom() < 0 || branch[n].getTo() < 0) {
 				yij[n].setG(-Gij / YK);
@@ -306,23 +306,32 @@ public class ProcData {
 		Variable.setYij1(yij1);
 	}
 	
-	public void lanlan(int flag) {
+	public void calcFactor(int flag) {
+		
 		Info info = Variable.getPf_info();
 		Yii[] yii = Variable.getYii();
 		Yij[] yij = Variable.getYij();
 		int NYseq[] = Variable.getNYseq();
 		PVNode pvNode[] = Variable.getPvNode();
-		int n_pv = 1;
-		int i_pv = pvNode[0].getIndex();
+		
+		int n_pv = -1;
+		int i_pv = pvNode[0].getIndex() - 1;
+		
 		double B[] = new double[info.getN()];
 		double nusum[] = new double[info.getN()-1];
 		double D[] = new double[info.getN()-1];
 		U_Type U[] = new U_Type[info.getN()-1];
 		
+//		System.out.println("l:"+pvNode.length);
+		
+		for (int i = 0; i < info.getN() - 1; ++i) {
+			U[i] = new U_Type();
+		}
+		
 		for (int i=0; i<info.getN()-1; ++i) {
 			if (flag == 2 && i == i_pv) {
 				n_pv = n_pv+1;
-				i_pv = pvNode[n_pv].getIndex();
+				i_pv = pvNode[n_pv].getIndex() - 1;
 				nusum[i] = 0;
 				D[i] = 0;
 			}else {
@@ -339,7 +348,7 @@ public class ProcData {
 				
 				if (flag == 2) {
 					for (int count=0; count<info.getNpv(); ++count) {
-						int j = pvNode[count].getIndex();
+						int j = pvNode[count].getIndex() - 1;
 						B[j] = 0;
 					}
 				}
@@ -398,5 +407,7 @@ public class ProcData {
 		pd.ReadData("/Users/xyk0058/Git/newPowerFlow/src/com/dhcc/casedata/case14.txt");
 		pd.InitData();
 		pd.calcY();
+		pd.calcFactor(2);
+		
 	}
 }
