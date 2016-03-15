@@ -18,11 +18,25 @@ public class Variable {
 	private static Bus[] load;			//Nl
 	private static PVNode[] pvNode;
 	private static Yii[] Yii;
+	private static Yii[] Yii1;
 	private static Yij[] Yij;
+	private static Yij[] Yij1;
 	private static int[] NYseq;
 	private static int[] NYsum;
 	
 	
+	public static Yii[] getYii1() {
+		return Yii1;
+	}
+	public static void setYii1(Yii[] yii1) {
+		Yii1 = yii1;
+	}
+	public static Yij[] getYij1() {
+		return Yij1;
+	}
+	public static void setYij1(Yij[] yij1) {
+		Yij1 = yij1;
+	}
 	public static int[] getNYseq() {
 		return NYseq;
 	}

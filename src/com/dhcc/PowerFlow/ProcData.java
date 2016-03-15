@@ -294,6 +294,13 @@ public class ProcData {
 				yii1[j].setB(yii1[j].getB() + b_ij);
 			}
 		}
+		
+		Variable.setNYseq(NYseq);
+		Variable.setNYsum(NYsum);
+		Variable.setYii(yii);
+		Variable.setYii1(yii1);
+		Variable.setYij(yij);
+		Variable.setYij1(yij1);
 	}
 	
 	
