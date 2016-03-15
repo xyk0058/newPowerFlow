@@ -14,6 +14,7 @@ import com.dhcc.model.Bus;
 import com.dhcc.model.Info;
 import com.dhcc.model.MPC;
 import com.dhcc.model.PVNode;
+import com.dhcc.model.U_Type;
 import com.dhcc.model.Yii;
 import com.dhcc.model.Yij;
 
@@ -93,6 +94,7 @@ public class ProcData {
 		
 		return;
 	}
+
 	public void InitData() {
 		Info info = Variable.getPf_info();
 		Branch[] branch = new Branch[info.getNb()];
@@ -302,6 +304,93 @@ public class ProcData {
 		Variable.setYii1(yii1);
 		Variable.setYij(yij);
 		Variable.setYij1(yij1);
+	}
+	
+	public void lanlan(int flag) {
+		Info info = Variable.getPf_info();
+		Yii[] yii = Variable.getYii();
+		Yij[] yij = Variable.getYij();
+		int nvseq[] = Variable.getNYseq();
+		PVNode pvNode[] = Variable.getPvNode();
+		int n_pv = 1;
+		int i_pv = pvNode[0].getIndex();
+		double B[] = new double[info.getN()];
+		double nusum[] = new double[info.getN()-1];
+		double D[] = new double[info.getN()-1];
+		U_Type U[] = new U_Type[info.getN()-1];
+		
+		for (int i=0; i<info.getN()-1; ++i) {
+			if (flag == 2 && i == i_pv) {
+				n_pv = n_pv+1;
+				i_pv = pvNode[n_pv].getIndex();
+				nusum[i] = 0;
+				D[i] = 0;
+			}else {
+				for (int count = i+1; count<info.getN()-1; ++count) {
+					B[count] = 0.0;
+				}
+				
+				B[i] = yii[i].getB();
+
+				for (int count = nvseq[i]; count<nvseq[i+1]-1; ++count) {
+					int j = yij[count].getJ();
+					B[j] = yij[count].getB();
+				}
+				
+				if (flag == 2) {
+					for (int count=0; count<info.getNpv(); ++count) {
+						int j = pvNode[count].getIndex();
+						B[j] = 0;
+					}
+				}
+				
+				int n_u = 0;
+				int i_above = 0;
+				
+				while (true) {
+					if (i_above>i-1){
+						int Btemp = 0;
+						D[i] = Btemp;
+						
+						int count = 0;
+						for (int j=i+1; j<info.getN()-1; ++j) {
+							if (B[j] != 0) {
+								U[n_u].setValue(B[j]*Btemp);
+								U[n_u].setJ(j);
+								++count;
+								++n_u;
+							}
+						}
+						nusum[i]=count;
+					}else {
+						int count = 1;
+						while(true) {
+							if(count<=nusum[i_above]) {
+								if (U[n_u].getJ() == 1){
+									double Btemp = U[n_u].getValue()/D[i_above];
+									while (true) {
+										if(count > nusum[i_above]) {
+											break;
+										}else {
+											int j = U[n_u].getJ();
+											B[j] = B[j]-Btemp*U[n_u].getValue();
+											count = count+1;
+											n_u = n_u+1;
+										}
+									}
+									break;
+								}else {
+									++count;
+									++n_u;
+								}
+								++i_above;
+							}
+						}
+						
+					}
+				}
+			}
+		}
 	}
 	
 	
