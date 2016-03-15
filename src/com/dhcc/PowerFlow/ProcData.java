@@ -349,7 +349,7 @@ public class ProcData {
 				
 				while (true) {
 					if (i_above>i-1){
-						int Btemp = 0;
+						int Btemp = 0;//TODO
 						D[i] = Btemp;
 						
 						int count = 0;
