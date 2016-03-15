@@ -177,7 +177,7 @@ public class ProcData {
 		
 		Branch[] branch = Variable.getBranch();
 		
-		System.out.println(info.getNb());
+		//System.out.println(info.getNb());
 		
 		for (int i = 0; i < info.getN(); ++i) {
 			yii[i] = new Yii();
@@ -246,7 +246,7 @@ public class ProcData {
 			NYseq[i + 1] = NYseq[i] + NYsum[i];
 		}
 		
-		for (int n = 1; n < info.getNb(); ++n) {
+		for (int n = 0; n < info.getNb(); ++n) {
 			int i = branch[n].getFrom() - 1;
 			int j = branch[n].getTo() - 1;
 			YK = branch[n].getY0();
@@ -263,26 +263,27 @@ public class ProcData {
 					
 					yii1[i].setB(yii1[i].getB() + (1.0 - 1.0 / YK) * b_ij);
 					
-					yii[j].setG(yii[i].getG() + (1.0 - YK) * Gij);
-					yii[j].setB(yii[i].getB() + (1.0 - YK) * Bij);
+					yii[j].setG(yii[j].getG() + (1.0 - YK) * Gij);
+					yii[j].setB(yii[j].getB() + (1.0 - YK) * Bij);
 					
 					yii1[j].setB(yii1[j].getB() + (1.0 - YK) * b_ij);
 				} else {
 					j = Math.abs(j);
+					
 					Gij = yij[n].getG();
 					Bij = yij[n].getB();
 					
 					b_ij = yij1[n].getB();
 					
-					yii[i].setG(yii[i].getG() + (1.0 - 1.0 / YK) * Gij);
-					yii[i].setB(yii[i].getB() + (1.0 - 1.0 / YK) * Bij);
+					yii[j].setG(yii[j].getG() + (1.0 - 1.0 / YK) * Gij);
+					yii[j].setB(yii[j].getB() + (1.0 - 1.0 / YK) * Bij);
 					
-					yii1[i].setB(yii1[i].getB() + (1.0 - 1.0 / YK) * b_ij);
+					yii1[j].setB(yii1[j].getB() + (1.0 - 1.0 / YK) * b_ij);
 					
-					yii[j].setG(yii[i].getG() + (1.0 - YK) * Gij);
-					yii[j].setB(yii[i].getB() + (1.0 - YK) * Bij);
+					yii[i].setG(yii[i].getG() + (1.0 - YK) * Gij);
+					yii[i].setB(yii[i].getB() + (1.0 - YK) * Bij);
 					
-					yii1[j].setB(yii1[j].getB() + (1.0 - YK) * b_ij);
+					yii1[i].setB(yii1[i].getB() + (1.0 - YK) * b_ij);
 				}
 			} else {
 				Bij = YK / 2.0;
