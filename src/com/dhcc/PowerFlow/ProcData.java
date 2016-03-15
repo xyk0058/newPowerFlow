@@ -310,7 +310,7 @@ public class ProcData {
 		Info info = Variable.getPf_info();
 		Yii[] yii = Variable.getYii();
 		Yij[] yij = Variable.getYij();
-		int nvseq[] = Variable.getNYseq();
+		int NYseq[] = Variable.getNYseq();
 		PVNode pvNode[] = Variable.getPvNode();
 		int n_pv = 1;
 		int i_pv = pvNode[0].getIndex();
@@ -332,7 +332,7 @@ public class ProcData {
 				
 				B[i] = yii[i].getB();
 
-				for (int count = nvseq[i]; count<nvseq[i+1]-1; ++count) {
+				for (int count = NYseq[i]; count<NYseq[i+1]-1; ++count) {
 					int j = yij[count].getJ();
 					B[j] = yij[count].getB();
 				}
@@ -347,48 +347,47 @@ public class ProcData {
 				int n_u = 0;
 				int i_above = 0;
 				
-				while (true) {
-					if (i_above>i-1){
-						int Btemp = 0;//TODO
-						D[i] = Btemp;
-						
-						int count = 0;
-						for (int j=i+1; j<info.getN()-1; ++j) {
-							if (B[j] != 0) {
-								U[n_u].setValue(B[j]*Btemp);
-								U[n_u].setJ(j);
-								++count;
-								++n_u;
-							}
-						}
-						nusum[i]=count;
-					}else {
-						int count = 1;
-						while(true) {
-							if(count<=nusum[i_above]) {
-								if (U[n_u].getJ() == 1){
-									double Btemp = U[n_u].getValue()/D[i_above];
-									while (true) {
-										if(count > nusum[i_above]) {
-											break;
-										}else {
-											int j = U[n_u].getJ();
-											B[j] = B[j]-Btemp*U[n_u].getValue();
-											count = count+1;
-											n_u = n_u+1;
-										}
-									}
-									break;
-								}else {
-									++count;
-									++n_u;
-								}
-								++i_above;
-							}
+				while (i_above <= i-1) {
+					int count = 1;
+					boolean f = true;
+					while(count <= nusum[i_above]) {
+						if (U[n_u].getJ() == 1){
+							f = false;
+							break;
+						}else {
+							++count;
+							++n_u;
 						}
 						
 					}
+					
+					if (!f) {
+						double Btemp = U[n_u].getValue()/D[i_above];
+						
+						while (count <= nusum[i_above]) {
+							int j = U[n_u].getJ();
+							B[j] = B[j]-Btemp*U[n_u].getValue();
+							count = count+1;
+							n_u = n_u+1;
+						}
+					}
+					
+					++i_above;
 				}
+				
+				int Btemp = 0;//TODO
+				D[i] = Btemp;
+				
+				int count = 0;
+				for (int j=i+1; j<info.getN()-1; ++j) {
+					if (B[j] != 0) {
+						U[n_u].setValue(B[j]*Btemp);
+						U[n_u].setJ(j);
+						++count;
+						++n_u;
+					}
+				}
+				nusum[i]=count;
 			}
 		}
 	}
