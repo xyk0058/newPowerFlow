@@ -3,6 +3,7 @@ package com.dhcc.Global;
 import com.dhcc.model.Branch;
 import com.dhcc.model.Bus;
 import com.dhcc.model.Info;
+import com.dhcc.model.NodalVoltage_Type;
 import com.dhcc.model.PVNode;
 import com.dhcc.model.U_Type;
 import com.dhcc.model.Yii;
@@ -30,7 +31,23 @@ public class Variable {
 	private static int[] NUsum2;
 	private static double[] D2;
 	private static U_Type[] U2;
+	//存放节点功率的数组
+	private static double[][] NodalPower;
+	//节点电压数组
+	private static NodalVoltage_Type[] NodalVoltage;
 	
+	public static double[][] getNodalPower() {
+		return NodalPower;
+	}
+	public static void setNodalPower(double[][] nodalPower) {
+		NodalPower = nodalPower;
+	}
+	public static NodalVoltage_Type[] getNodalVoltage() {
+		return NodalVoltage;
+	}
+	public static void setNodalVoltage(NodalVoltage_Type[] nodalVoltage) {
+		NodalVoltage = nodalVoltage;
+	}
 	public static int[] getNUsum1() {
 		return NUsum1;
 	}

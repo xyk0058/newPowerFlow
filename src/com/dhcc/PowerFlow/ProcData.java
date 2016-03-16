@@ -13,6 +13,7 @@ import com.dhcc.model.Branch;
 import com.dhcc.model.Bus;
 import com.dhcc.model.Info;
 import com.dhcc.model.MPC;
+import com.dhcc.model.NodalVoltage_Type;
 import com.dhcc.model.PVNode;
 import com.dhcc.model.U_Type;
 import com.dhcc.model.Yii;
@@ -314,7 +315,7 @@ public class ProcData {
 		int NYseq[] = Variable.getNYseq();
 		PVNode pvNode[] = Variable.getPvNode();
 		
-		int n_pv = -1;
+		int n_pv = 0;
 		int i_pv = pvNode[0].getIndex() - 1;
 		
 		double B[] = new double[info.getN()];
@@ -330,8 +331,8 @@ public class ProcData {
 		
 		for (int i=0; i<info.getN()-1; ++i) {
 			if (flag == 2 && i == i_pv) {
-				n_pv = n_pv+1;
 				i_pv = pvNode[n_pv].getIndex() - 1;
+				n_pv = n_pv+1;
 				nusum[i] = 0;
 				D[i] = 0;
 			}else {
@@ -411,39 +412,144 @@ public class ProcData {
 		}
 	}
 	
-	public void solveLinearEquation(int flag) {
+	public double[] solveLinearEquation(int flag) {
+		Info info = Variable.getPf_info();
 		double DItemp = 0;
 		int[] NUsum = null;
-		double[] DI = null;
+		double[] D = null;
+		double[] DI = new double[info.getN()];
 		U_Type[] U = null;
 		int n_u = 0;
 		if (flag == 1) {
 			NUsum = Variable.getNUsum1();
-			DI = Variable.getD1();
+			D = Variable.getD1();
 			U = Variable.getU1();
 		} else {
 			NUsum = Variable.getNUsum2();
-			DI = Variable.getD2();
+			D = Variable.getD2();
 			U = Variable.getU2();
 		}
-		Info info = Variable.getPf_info();
+		
 		for (int i = 0; i < info.getN() - 1; ++i) {
 			DItemp = DI[i];
-			for (int count = 1; count < NUsum[i]; ++count) {
+			for (int count = 0; count < NUsum[i]; ++count) {
 				int j = U[n_u].getJ();
 				DI[j] = DI[j] - DItemp * U[n_u].getValue();
 				++n_u;
 			}
-			DI[i] = DItemp * DI[i];
+			DI[i] = DItemp * D[i];
 		}
-		for (int i = info.getN() - 1; i >= 0; --i) {
+		for (int i = info.getN() - 2; i >= 0; --i) {
 			DItemp = DI[i];
-			for (int count = 1; count < NUsum[i]; ++count) {
+			for (int count = 0; count < NUsum[i]; ++count) {
 				--n_u;
 				int j = U[n_u].getJ();
 				DItemp = DItemp - DI[j] * U[n_u].getValue();
 			}
 			DI[i] = DItemp;
+		}
+		return DI;
+	}
+	
+	public void calcNodePQ(int flag) {
+		Info info = Variable.getPf_info();
+		Yii[] yii = Variable.getYii();
+		Yij[] yij = Variable.getYij();
+		int[] NYseq = Variable.getNYseq();
+		double[][] NodalPower = new double[info.getN()][2];
+		NodalVoltage_Type[] NodalVoltage = new NodalVoltage_Type[info.getN()];
+		
+		for (int i = 0; i < info.getN(); ++i) {
+			NodalPower[i][flag] = 0;
+			NodalVoltage[i] = new NodalVoltage_Type();
+		}
+		for (int i = 0; i < info.getN(); ++i) {
+			double Vi = NodalVoltage[i].getV();
+			double A,B;
+			if (flag == 1) {
+				A = yii[i].getG();
+			} else {
+				A = - yii[i].getB();
+			}
+			NodalPower[i][flag] = NodalPower[i][flag] + Vi * Vi * A;
+			if (i == info.getN() - 1) break;
+			for (int n = NYseq[i]; n < NYseq[i+1]; ++n) {
+				if (flag == 1) {
+					A = yij[n].getG();
+					B = yij[n].getB();
+				} else {
+					A = -yij[n].getB();
+					B = yij[n].getG();
+				}
+				int j = yij[n].getJ();
+				double VV = Vi * NodalVoltage[j].getV();
+				double theta = NodalVoltage[i].getTheta() - NodalVoltage[j].getTheta();
+				A = A * VV * Math.cos(theta);
+				B = B * VV * Math.sin(theta);
+				NodalPower[i][flag] = NodalPower[i][flag] + A + B;
+				NodalPower[j][flag] = NodalPower[j][flag] + A - B;
+			}
+		}
+		Variable.setNodalPower(NodalPower);
+		Variable.setNodalVoltage(NodalVoltage);
+	}
+	
+	public void calcNodeInfo(int flag) {
+		Info info = Variable.getPf_info();
+		double[] DI = new double[info.getN()];
+		int ErrorNode = 0;
+		double MaxError = 0;
+		int i = 0, n_g = 0, n_l = 0, n_pv = 0;
+		Bus[] Generator = Variable.getGenerator();
+		Bus[] Load = Variable.getLoad();
+		PVNode[] pvNode = Variable.getPvNode();
+		NodalVoltage_Type[] NodalVoltage = Variable.getNodalVoltage();
+		double[][] NodalPower = Variable.getNodalPower();
+		double[][] GenePower = new double[info.getN()][info.getN()];
+		int i_g = Generator[0].getIndex() - 1;
+		int i_l = Load[0].getIndex() - 1;
+		int i_pv = pvNode[0].getIndex() -1;
+		
+		while (true) {
+			double Vi = NodalVoltage[i].getV();
+			double Wi = 0, Wtemp = 0;
+			if (i == i_l) {
+				if (flag == 1) {
+					Wi = Load[n_l].getP();
+				} else {
+					Wi = Load[n_l].getQ();
+				}
+				i_l = Load[n_l].getIndex() - 1;
+				++n_l;
+			} else {
+				Wi = 0;
+			}
+			
+			Wtemp = Wi;
+			Wi = Wi - NodalPower[i][flag];
+			if (i == i_g) {
+				NodalPower[i][flag] = Wtemp;
+				GenePower[i_g][flag] = -Wi;
+				if (flag == 1) {
+					Wi = Wi + Generator[n_g].getP();
+				} else {
+					Wi = Wi + Generator[n_g].getQ();
+				}
+				i_g = Generator[n_g].getIndex() - 1;
+				++n_g;
+			}
+			if (i == info.getN() - 1) break;
+			if (flag == 2 && i == i_pv) {
+				i_pv = pvNode[n_pv].getIndex() - 1;
+				++n_pv;
+			} else {
+				if(Math.abs(Wi) > MaxError) {
+					MaxError = Math.abs(Wi);
+					ErrorNode = i;
+				}
+				DI[i] = Wi / Vi;
+			}
+			++i;
 		}
 	}
 	
@@ -453,8 +559,10 @@ public class ProcData {
 		pd.ReadData("/Users/xyk0058/Git/newPowerFlow/src/com/dhcc/casedata/case14.txt");
 		pd.InitData();
 		pd.calcY();
-		pd.calcFactor(2);
+		pd.calcFactor(1);
 		pd.calcFactor(2);
 		pd.solveLinearEquation(1);
+		pd.calcNodePQ(1);
+		pd.calcNodeInfo(1);
 	}
 }
