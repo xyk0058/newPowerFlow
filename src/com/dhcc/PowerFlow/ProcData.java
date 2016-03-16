@@ -553,6 +553,34 @@ public class ProcData {
 		}
 	}
 	
+	public void PQIterator() {
+		Info info = Variable.getPf_info();
+		int flag = 1;
+		double[] DI = null;
+		NodalVoltage_Type[] NodalVoltage = null;
+		while (true) {
+			if (flag == 1) {
+				DI = solveLinearEquation(1);
+				calcNodePQ(1);
+				calcNodeInfo(1);
+			} else {
+				DI = solveLinearEquation(2);
+				calcNodePQ(2);
+				calcNodeInfo(2);
+			}
+			NodalVoltage = Variable.getNodalVoltage();
+			for (int i = 0; i < info.getN(); ++i) {
+				if (flag == 1) {
+					double Dtheta = DI[i] / info.getV0();
+					NodalVoltage[i].setTheta(NodalVoltage[i].getTheta() - Dtheta);
+				} else {
+					Double DV = DI[i];
+					NodalVoltage[i].setV(NodalVoltage[i].getV() - DV);
+				}
+			}
+		}
+	}
+	
 	
 	public static void main(String[] args) {
 		ProcData pd = new ProcData();
