@@ -318,7 +318,7 @@ public class ProcData {
 		int i_pv = pvNode[0].getIndex() - 1;
 		
 		double B[] = new double[info.getN()];
-		double nusum[] = new double[info.getN()-1];
+		int nusum[] = new int[info.getN()-1];
 		double D[] = new double[info.getN()-1];
 		U_Type U[] = new U_Type[info.getN()-1];
 		
@@ -384,7 +384,7 @@ public class ProcData {
 					++i_above;
 				}
 				
-				int Btemp = 0;//TODO
+				double Btemp = 1.0 / B[i];//TODO
 				D[i] = Btemp;
 				
 				int count = 0;
@@ -399,6 +399,52 @@ public class ProcData {
 				nusum[i]=count;
 			}
 		}
+		
+		if (flag == 1) {
+			Variable.setD1(D);
+			Variable.setU1(U);
+			Variable.setNUsum1(nusum);
+		} else if (flag == 2) {
+			Variable.setD2(D);
+			Variable.setU2(U);
+			Variable.setNUsum2(nusum);
+		}
+	}
+	
+	public void solveLinearEquation(int flag) {
+		double DItemp = 0;
+		int[] NUsum = null;
+		double[] DI = null;
+		U_Type[] U = null;
+		int n_u = 0;
+		if (flag == 1) {
+			NUsum = Variable.getNUsum1();
+			DI = Variable.getD1();
+			U = Variable.getU1();
+		} else {
+			NUsum = Variable.getNUsum2();
+			DI = Variable.getD2();
+			U = Variable.getU2();
+		}
+		Info info = Variable.getPf_info();
+		for (int i = 0; i < info.getN() - 1; ++i) {
+			DItemp = DI[i];
+			for (int count = 1; count < NUsum[i]; ++count) {
+				int j = U[n_u].getJ();
+				DI[j] = DI[j] - DItemp * U[n_u].getValue();
+				++n_u;
+			}
+			DI[i] = DItemp * DI[i];
+		}
+		for (int i = info.getN() - 1; i >= 0; --i) {
+			DItemp = DI[i];
+			for (int count = 1; count < NUsum[i]; ++count) {
+				--n_u;
+				int j = U[n_u].getJ();
+				DItemp = DItemp - DI[j] * U[n_u].getValue();
+			}
+			DI[i] = DItemp;
+		}
 	}
 	
 	
@@ -408,6 +454,7 @@ public class ProcData {
 		pd.InitData();
 		pd.calcY();
 		pd.calcFactor(2);
-		
+		pd.calcFactor(2);
+		pd.solveLinearEquation(1);
 	}
 }

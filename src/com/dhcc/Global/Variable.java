@@ -4,6 +4,7 @@ import com.dhcc.model.Branch;
 import com.dhcc.model.Bus;
 import com.dhcc.model.Info;
 import com.dhcc.model.PVNode;
+import com.dhcc.model.U_Type;
 import com.dhcc.model.Yii;
 import com.dhcc.model.Yij;
 
@@ -23,8 +24,49 @@ public class Variable {
 	private static Yij[] Yij1;
 	private static int[] NYseq;
 	private static int[] NYsum;
+	private static int[] NUsum1;
+	private static double[] D1;
+	private static U_Type[] U1;
+	private static int[] NUsum2;
+	private static double[] D2;
+	private static U_Type[] U2;
 	
-	
+	public static int[] getNUsum1() {
+		return NUsum1;
+	}
+	public static void setNUsum1(int[] nUsum1) {
+		NUsum1 = nUsum1;
+	}
+	public static double[] getD1() {
+		return D1;
+	}
+	public static void setD1(double[] d1) {
+		D1 = d1;
+	}
+	public static U_Type[] getU1() {
+		return U1;
+	}
+	public static void setU1(U_Type[] u1) {
+		U1 = u1;
+	}
+	public static int[] getNUsum2() {
+		return NUsum2;
+	}
+	public static void setNUsum2(int[] nUsum2) {
+		NUsum2 = nUsum2;
+	}
+	public static double[] getD2() {
+		return D2;
+	}
+	public static void setD2(double[] d2) {
+		D2 = d2;
+	}
+	public static U_Type[] getU2() {
+		return U2;
+	}
+	public static void setU2(U_Type[] u2) {
+		U2 = u2;
+	}
 	public static Yii[] getYii1() {
 		return Yii1;
 	}
