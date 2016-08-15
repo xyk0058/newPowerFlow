@@ -460,7 +460,7 @@ public class ProcData {
 		NodalVoltage_Type[] NodalVoltage = new NodalVoltage_Type[info.getN()];
 		
 		for (int i = 0; i < info.getN(); ++i) {
-			NodalPower[i][flag] = 0;
+			NodalPower[i][flag-1] = 0;
 			NodalVoltage[i] = new NodalVoltage_Type();
 		}
 		for (int i = 0; i < info.getN(); ++i) {
@@ -471,7 +471,7 @@ public class ProcData {
 			} else {
 				A = - yii[i].getB();
 			}
-			NodalPower[i][flag] = NodalPower[i][flag] + Vi * Vi * A;
+			NodalPower[i][flag-1] = NodalPower[i][flag-1] + Vi * Vi * A;
 			if (i == info.getN() - 1) break;
 			for (int n = NYseq[i]; n < NYseq[i+1]; ++n) {
 				if (flag == 1) {
@@ -486,8 +486,8 @@ public class ProcData {
 				double theta = NodalVoltage[i].getTheta() - NodalVoltage[j].getTheta();
 				A = A * VV * Math.cos(theta);
 				B = B * VV * Math.sin(theta);
-				NodalPower[i][flag] = NodalPower[i][flag] + A + B;
-				NodalPower[j][flag] = NodalPower[j][flag] + A - B;
+				NodalPower[i][flag-1] = NodalPower[i][flag-1] + A + B;
+				NodalPower[j][flag-1] = NodalPower[j][flag-1] + A - B;
 			}
 		}
 		Variable.setNodalPower(NodalPower);
@@ -526,9 +526,9 @@ public class ProcData {
 			}
 			
 			Wtemp = Wi;
-			Wi = Wi - NodalPower[i][flag];
+			Wi = Wi - NodalPower[i][flag-1];
 			if (i == i_g) {
-				NodalPower[i][flag] = Wtemp;
+				NodalPower[i][flag-1] = Wtemp;
 				GenePower[i_g][flag] = -Wi;
 				if (flag == 1) {
 					Wi = Wi + Generator[n_g].getP();
@@ -551,14 +551,25 @@ public class ProcData {
 			}
 			++i;
 		}
+		Variable.setMaxError(MaxError);
 	}
 	
 	public void PQIterator() {
 		Info info = Variable.getPf_info();
-		int flag = 1;
+		int f = 0;
+		int flag = 0;
 		double[] DI = null;
 		NodalVoltage_Type[] NodalVoltage = null;
-		while (true) {
+		boolean kq = true, kp = true;
+		while (f < 10) {
+			++f;
+			flag = f % 2;
+			if (!kp) {
+				flag = 2;
+			}
+			if (!kq) {
+				flag = 1;
+			}
 			if (flag == 1) {
 				DI = solveLinearEquation(1);
 				calcNodePQ(1);
@@ -578,6 +589,23 @@ public class ProcData {
 					NodalVoltage[i].setV(NodalVoltage[i].getV() - DV);
 				}
 			}
+			Variable.setNodalVoltage(NodalVoltage);
+			double MaxError = Variable.getMaxError();
+			if (flag == 1) {
+				if(MaxError < info.getEps()) {
+					kp = false;
+				}
+				System.out.println("flag1");
+			} else {
+				if(MaxError < info.getEps()) {
+					kq = false;
+				}
+				System.out.println("flag2");
+			}
+			for (int i = 0; i < info.getN(); ++i) {
+				System.out.println(NodalVoltage[i].getV() + " " + NodalVoltage[i].getTheta());
+			}
+			if (!kq && !kp) break; 
 		}
 	}
 	
@@ -589,8 +617,6 @@ public class ProcData {
 		pd.calcY();
 		pd.calcFactor(1);
 		pd.calcFactor(2);
-		pd.solveLinearEquation(1);
-		pd.calcNodePQ(1);
-		pd.calcNodeInfo(1);
+		pd.PQIterator();
 	}
 }

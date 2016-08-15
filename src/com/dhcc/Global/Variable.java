@@ -35,7 +35,14 @@ public class Variable {
 	private static double[][] NodalPower;
 	//节点电压数组
 	private static NodalVoltage_Type[] NodalVoltage;
+	private static double MaxError;
 	
+	public static double getMaxError() {
+		return MaxError;
+	}
+	public static void setMaxError(double maxError) {
+		MaxError = maxError;
+	}
 	public static double[][] getNodalPower() {
 		return NodalPower;
 	}
